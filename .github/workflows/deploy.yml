@@ -20,11 +20,11 @@ jobs:
 
     - name: Install backend dependencies
       run: npm install
-      working-directory: ./backend # <--- 여기에 추가되었습니다.
+      working-directory: ./backend # 백엔드 폴더에서 의존성 설치
 
     - name: Build backend application (if applicable)
       run: npm run build
-      working-directory: ./backend # <--- 여기에 추가되었습니다. (빌드 과정이 있다면)
+      working-directory: ./backend # 백엔드 폴더에서 빌드 (빌드 과정이 있다면)
 
     - name: Deploy to EC2
       uses: appleboy/ssh-action@master
@@ -40,26 +40,27 @@ jobs:
 
           # GitHub에서 프로젝트 클론 (처음 배포 시) 또는 풀 (이후 배포 시)
           if [ ! -d "back_schedule_planner" ]; then
-            git clone git@github.com:seominji58/back_schedule_planner.git
+            # HTTPS 방식으로 클론하며 GitHub 토큰으로 인증
+            git clone https://${{ secrets.GITHUB_TOKEN }}@github.com/seominji58/back_schedule_planner.git
           else
             cd back_schedule_planner
             git pull origin main
           fi
 
           # 프로젝트 디렉토리 (backend 폴더까지)로 이동
-          cd /home/ubuntu/back_schedule_planner/backend # <--- 'backend' 경로가 추가되었습니다.
+          cd /home/ubuntu/back_schedule_planner/backend # 'backend' 경로가 추가되었습니다.
 
           # Node.js 의존성 설치 (EC2에서는 이미 설치되어 있을 수도 있지만, 안전하게 다시 실행)
           npm install
 
           # PM2를 사용하여 애플리케이션 재시작 또는 시작
           # PM2 설정이 없다면 새로 시작하고, 있다면 재시작
-          pm2 list | grep "schedule-planner-backend" # 앱 이름 수정 (주석 제거)
+          pm2 list | grep "schedule-planner-backend"
           if [ $? -eq 0 ]; then
-            pm2 restart schedule-planner-backend # 앱 이름 수정 (주석 제거)
+            pm2 restart schedule-planner-backend
           else
-            # Node.js 애플리케이션의 시작 스크립트에 따라 변경 (예: app.js, index.js 등)
-            pm2 start dist/server.js --name schedule-planner-backend # 시작 파일 및 앱 이름 수정 (주석 제거)
+            # Node.js 애플리케이션의 시작 스크립트에 따라 변경 (예: dist/server.js, index.js 등)
+            pm2 start dist/server.js --name schedule-planner-backend
           fi
 
           # PM2 프로세스 목록 저장 (재부팅 시 자동 실행을 위해)
