@@ -28,14 +28,14 @@ jobs:
 
     - name: Deploy to EC2
       uses: appleboy/ssh-action@master
-      with: # <-- 10칸 들여쓰기
-        host: 44.212.4.6 # <-- 12칸 들여쓰기
+      with: # 이 'with'는 'uses'와 같은 레벨 (스페이스 8칸)
+        host: 44.212.4.6 # 이 'host'는 'with' 아래 2칸 더 들여쓰기 (스페이스 10칸)
         username: ubuntu
         key: ${{ secrets.EC2_SSH_KEY }}
         # env 블록의 들여쓰기를 'host', 'username', 'key'와 동일하게 맞춥니다.
-        env: # <-- 12칸 들여쓰기
+        env: # <-- 이 'env'는 'host', 'username', 'key'와 같은 레벨입니다. (스페이스 10칸)
           # Firebase 설정
-          FIREBASE_TYPE: ${{ secrets.FIREBASE_TYPE }} # <-- 14칸 들여쓰기
+          FIREBASE_TYPE: ${{ secrets.FIREBASE_TYPE }} # <-- 12칸 들여쓰기
           FIREBASE_PROJECT_ID: ${{ secrets.FIREBASE_PROJECT_ID }}
           FIREBASE_PRIVATE_KEY_ID: ${{ secrets.FIREBASE_PRIVATE_KEY_ID }}
           FIREBASE_PRIVATE_KEY: ${{ secrets.FIREBASE_PRIVATE_KEY }}
@@ -72,7 +72,7 @@ jobs:
           JWT_SECRET: ${{ secrets.JWT_SECRET }}
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
 
-        script: | # <-- 12칸 들여쓰기 (env와 동일 레벨)
+        script: | # <-- 10칸 들여쓰기 (env와 동일 레벨)
           # EC2 서버에서 실행될 명령어들
           cd /home/ubuntu/ # EC2에 배포할 프로젝트의 상위 디렉토리
           # 기존 프로젝트 디렉토리가 있다면 삭제 (선택 사항, 필요에 따라)
