@@ -32,13 +32,15 @@ jobs:
         host: 44.212.4.6 # <-- 12칸 들여쓰기
         username: ubuntu
         key: ${{ secrets.EC2_SSH_KEY }}
-        script: | # <-- 12칸 들여쓰기 (host, username, key와 동일 레벨)
+        script: | # <-- 12칸 들여쓰기
           # EC2 서버에서 실행될 명령어들
           # GitHub Secrets에 저장된 환경 변수들을 export하여 PM2 프로세스에 전달합니다.
+          # 특히 FIREBASE_PRIVATE_KEY는 printf를 사용하여 줄바꿈 문자를 안전하게 처리합니다.
           export FIREBASE_TYPE=${{ secrets.FIREBASE_TYPE }}
           export FIREBASE_PROJECT_ID=${{ secrets.FIREBASE_PROJECT_ID }}
           export FIREBASE_PRIVATE_KEY_ID=${{ secrets.FIREBASE_PRIVATE_KEY_ID }}
-          export FIREBASE_PRIVATE_KEY=${{ secrets.FIREBASE_PRIVATE_KEY }}
+          # Private Key는 printf를 사용하여 정확한 줄바꿈을 유지합니다.
+          export FIREBASE_PRIVATE_KEY="$(printf '%s\n' "${{ secrets.FIREBASE_PRIVATE_KEY }}")"
           export FIREBASE_CLIENT_EMAIL=${{ secrets.FIREBASE_CLIENT_EMAIL }}
           export FIREBASE_CLIENT_ID=${{ secrets.FIREBASE_CLIENT_ID }}
           export FIREBASE_AUTH_URI=${{ secrets.FIREBASE_AUTH_URI }}
