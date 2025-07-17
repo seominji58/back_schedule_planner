@@ -94,6 +94,7 @@ jobs:
 
           # PM2를 사용하여 애플리케이션 재시작 또는 시작
           # --env production 옵션을 사용하여 GitHub Actions에서 전달받은 환경 변수를 로드합니다.
+          # 이제 PM2가 GitHub Actions에서 전달받은 환경 변수를 사용하게 됩니다.
           pm2 list | grep "schedule-planner-backend"
           if [ $? -eq 0 ]; then
             pm2 restart schedule-planner-backend --update-env
