@@ -3,7 +3,7 @@ name: Deploy Node.js application to EC2
 on:
   push:
     branches:
-      - main
+      - main # main 브랜치에 push 될 때마다 워크플로우 실행
 
 jobs:
   deploy:
@@ -16,51 +16,55 @@ jobs:
     - name: Set up Node.js
       uses: actions/setup-node@v4
       with:
-        node-version: '22'
+        node-version: '22' # EC2에 설치된 Node.js 버전과 일치시키세요 (v22.17.1 이므로 22로 설정해도 됩니다.)
 
     - name: Install backend dependencies
       run: npm install
-      working-directory: ./backend
+      working-directory: ./backend # 백엔드 폴더에서 의존성 설치
 
-    - name: Build backend application
+    - name: Build backend application (if applicable)
       run: npm run build
-      working-directory: ./backend
+      working-directory: ./backend # 백엔드 폴더에서 빌드 (빌드 과정이 있다면)
 
     - name: Deploy to EC2
       uses: appleboy/ssh-action@master
-      with:
-        host: ${{ secrets.EC2_HOST }}
+      with: # <-- 10칸 들여쓰기
+        host: 44.212.4.6 # <-- 12칸 들여쓰기
         username: ubuntu
         key: ${{ secrets.EC2_SSH_KEY }}
-        script: |
-          export FIREBASE_TYPE="${{ secrets.FIREBASE_TYPE }}"
-          export FIREBASE_PROJECT_ID="${{ secrets.FIREBASE_PROJECT_ID }}"
-          export FIREBASE_PRIVATE_KEY_ID="${{ secrets.FIREBASE_PRIVATE_KEY_ID }}"
-          export FIREBASE_PRIVATE_KEY="${{ secrets.FIREBASE_PRIVATE_KEY }}"
-          export FIREBASE_CLIENT_EMAIL="${{ secrets.FIREBASE_CLIENT_EMAIL }}"
-          export FIREBASE_CLIENT_ID="${{ secrets.FIREBASE_CLIENT_ID }}"
-          export FIREBASE_AUTH_URI="${{ secrets.FIREBASE_AUTH_URI }}"
-          export FIREBASE_TOKEN_URI="${{ secrets.FIREBASE_TOKEN_URI }}"
-          export FIREBASE_AUTH_PROVIDER_X509_CERT_URL="${{ secrets.FIREBASE_AUTH_PROVIDER_X509_CERT_URL }}"
-          export FIREBASE_CLIENT_X509_CERT_URL="${{ secrets.FIREBASE_CLIENT_X509_CERT_URL }}"
-          export FIREBASE_UNIVERSE_DOMAIN="${{ secrets.FIREBASE_UNIVERSE_DOMAIN }}"
+        script: | # <-- 12칸 들여쓰기 (host, username, key와 동일 레벨)
+          # EC2 서버에서 실행될 명령어들
+          # GitHub Secrets에 저장된 환경 변수들을 export하여 PM2 프로세스에 전달합니다.
+          export FIREBASE_TYPE=${{ secrets.FIREBASE_TYPE }}
+          export FIREBASE_PROJECT_ID=${{ secrets.FIREBASE_PROJECT_ID }}
+          export FIREBASE_PRIVATE_KEY_ID=${{ secrets.FIREBASE_PRIVATE_KEY_ID }}
+          export FIREBASE_PRIVATE_KEY=${{ secrets.FIREBASE_PRIVATE_KEY }}
+          export FIREBASE_CLIENT_EMAIL=${{ secrets.FIREBASE_CLIENT_EMAIL }}
+          export FIREBASE_CLIENT_ID=${{ secrets.FIREBASE_CLIENT_ID }}
+          export FIREBASE_AUTH_URI=${{ secrets.FIREBASE_AUTH_URI }}
+          export FIREBASE_TOKEN_URI=${{ secrets.FIREBASE_TOKEN_URI }}
+          export FIREBASE_AUTH_PROVIDER_X509_CERT_URL=${{ secrets.FIREBASE_AUTH_PROVIDER_X509_CERT_URL }}
+          export FIREBASE_CLIENT_X509_CERT_URL=${{ secrets.FIREBASE_CLIENT_X509_CERT_URL }}
+          export FIREBASE_UNIVERSE_DOMAIN=${{ secrets.FIREBASE_UNIVERSE_DOMAIN }}
+          export PORT=${{ secrets.PORT }}
+          export NODE_ENV=${{ secrets.NODE_ENV }}
+          export LOG_LEVEL=${{ secrets.LOG_LEVEL }}
+          export LOG_FILE=${{ secrets.LOG_FILE }}
+          export CORS_ORIGIN=${{ secrets.CORS_ORIGIN }}
+          export RATE_LIMIT_WINDOW_MS=${{ secrets.RATE_LIMIT_WINDOW_MS }}
+          export RATE_LIMIT_MAX_REQUESTS=${{ secrets.RATE_LIMIT_MAX_REQUESTS }}
+          export GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID }}
+          export GOOGLE_CLIENT_SECRET=${{ secrets.GOOGLE_CLIENT_SECRET }}
+          export GOOGLE_REDIRECT_URI=${{ secrets.GOOGLE_REDIRECT_URI }}
+          export GOOGLE_API_KEY=${{ secrets.GOOGLE_API_KEY }}
+          export JWT_SECRET=${{ secrets.JWT_SECRET }}
+          export OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}
 
-          export PORT="${{ secrets.PORT }}"
-          export NODE_ENV="${{ secrets.NODE_ENV }}"
-          export LOG_LEVEL="${{ secrets.LOG_LEVEL }}"
-          export LOG_FILE="${{ secrets.LOG_FILE }}"
-          export CORS_ORIGIN="${{ secrets.CORS_ORIGIN }}"
-          export RATE_LIMIT_WINDOW_MS="${{ secrets.RATE_LIMIT_WINDOW_MS }}"
-          export RATE_LIMIT_MAX_REQUESTS="${{ secrets.RATE_LIMIT_MAX_REQUESTS }}"
-          export GOOGLE_CLIENT_ID="${{ secrets.GOOGLE_CLIENT_ID }}"
-          export GOOGLE_CLIENT_SECRET="${{ secrets.GOOGLE_CLIENT_SECRET }}"
-          export GOOGLE_REDIRECT_URI="${{ secrets.GOOGLE_REDIRECT_URI }}"
-          export GOOGLE_API_KEY="${{ secrets.GOOGLE_API_KEY }}"
-          export JWT_SECRET="${{ secrets.JWT_SECRET }}"
-          export OPENAI_API_KEY="${{ secrets.OPENAI_API_KEY }}"
+          cd /home/ubuntu/ # EC2에 배포할 프로젝트의 상위 디렉토리
+          # 기존 프로젝트 디렉토리가 있다면 삭제 (선택 사항, 필요에 따라)
+          # rm -rf back_schedule_planner 
 
-          cd /home/ubuntu/
-
+          # GitHub에서 프로젝트 클론 (처음 배포 시) 또는 풀 (이후 배포 시)
           if [ ! -d "back_schedule_planner" ]; then
             git clone https://${{ secrets.GITHUB_TOKEN }}@github.com/seominji58/back_schedule_planner.git
           else
@@ -68,10 +72,14 @@ jobs:
             git pull origin main
           fi
 
+          # 프로젝트 디렉토리 (backend 폴더까지)로 이동
           cd /home/ubuntu/back_schedule_planner/backend
 
+          # Node.js 의존성 설치 (EC2에서는 이미 설치되어 있을 수도 있지만, 안전하게 다시 실행)
           npm install
 
+          # PM2를 사용하여 애플리케이션 재시작 또는 시작
+          # --update-env 옵션을 사용하여 현재 쉘의 환경 변수를 PM2 프로세스에 업데이트합니다.
           pm2 list | grep "schedule-planner-backend"
           if [ $? -eq 0 ]; then
             pm2 restart schedule-planner-backend --update-env
@@ -79,4 +87,5 @@ jobs:
             pm2 start dist/server.js --name schedule-planner-backend --env production
           fi
 
+          # PM2 프로세스 목록 저장 (재부팅 시 자동 실행을 위해)
           pm2 save
