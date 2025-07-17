@@ -33,8 +33,8 @@ jobs:
           username: ubuntu
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
-            # ✅ Firebase private key 줄바꿈 복원
-            export FIREBASE_PRIVATE_KEY="$(echo "${{ secrets.FIREBASE_PRIVATE_KEY }}" | sed 's/\\n/\n/g')"
+            # ✅ Firebase private key 줄바꿈 복원 + CR 제거
+            export FIREBASE_PRIVATE_KEY="$(echo -e '${{ secrets.FIREBASE_PRIVATE_KEY }}' | sed 's/\\r//g')"
 
             # ✅ Firebase 관련 환경변수
             export FIREBASE_TYPE="${{ secrets.FIREBASE_TYPE }}"
