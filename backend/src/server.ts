@@ -6,18 +6,13 @@ const PORT = process.env['PORT'] || 3001;
 const startServer = async () => {
   try {
 
-    app.listen(PORT, () => {
-      console.log('🚀 서버가 시작되었습니다!');
-      console.log(`📍 서버 주소: http://localhost:${PORT}`);
-      console.log(`🔍 헬스 체크: http://localhost:${PORT}/health`);
-      console.log(`🌍 환경: ${process.env['NODE_ENV'] || 'development'}`);
-      console.log(`⏰ 시작 시간: ${new Date().toISOString()}`);
-    });
-  } catch (error) {
-    console.error('❌ 서버 시작 실패:', error);
-    process.exit(1);
-  }
-};
+   app.listen(PORT, '0.0.0.0', () => {
+  console.log('🚀 서버가 시작되었습니다!');
+  console.log(`📍 서버 주소: http://localhost:${PORT}`);
+  console.log(`🔍 헬스 체크: http://localhost:${PORT}/health`);
+  console.log(`🌍 환경: ${process.env['NODE_ENV'] || 'development'}`);
+  console.log(`⏰ 시작 시간: ${new Date().toISOString()}`);
+});
 
 // 서버 시작
 startServer();
