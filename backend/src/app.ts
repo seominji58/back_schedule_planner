@@ -22,30 +22,35 @@ import { requestLogger } from './middleware/requestLogger';
 const app = express();
 
 // 기본 미들웨어 설정
-app.use(helmet()); // 보안 헤더 설정
-app.use(compression()); // 응답 압축
-app.use(express.json({ limit: '10mb' })); // JSON 파싱
-app.use(express.urlencoded({ extended: true })); // URL 인코딩 파싱
+app.use(helmet());
+app.use(compression());
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true }));
 
-// CORS 설정
+// ✅ CORS 설정 (배포 도메인까지 포함)
 const corsOptions = {
-  origin: ['http://localhost:3000', 'http://localhost:3001'], // 개발 환경에서 두 포트 모두 허용
+  origin: [
+    'http://localhost:3000',
+    'http://localhost:3001',
+    'https://schedule-planner.qpwo.asia',            // CloudFront 도메인
+    'https://schedule-planner-lake.vercel.app'       // Vercel 프론트엔드 도메인
+  ],
   credentials: true,
   optionsSuccessStatus: 200
 };
 app.use(cors(corsOptions));
 
-// Rate Limiting 설정
+// Rate Limiting
 const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15분
-  max: 100, // IP당 최대 요청 수
+  windowMs: 15 * 60 * 1000,
+  max: 100,
   message: {
     error: '너무 많은 요청이 발생했습니다. 잠시 후 다시 시도해주세요.'
   }
 });
 app.use('/api/', limiter);
 
-// 요청 로깅 미들웨어
+// 로깅
 app.use(requestLogger);
 
 // API 라우터 설정
@@ -57,52 +62,10 @@ app.use('/api/ai-conflict-analysis', aiConflictAnalysisRoutes);
 app.use('/api/calendar', calendarRoutes);
 app.use('/api/utils', utilsRoutes);
 
+// 정적 파일
 app.use('/kms', express.static(path.join(__dirname, '../kms')));
 
-/*
-=== 구현된 일정 관리 API 엔드포인트 목록 ===
-
-📋 조회 API:
-- GET  /api/schedules/personal      - 개인 일정 목록 조회
-- GET  /api/schedules/department    - 부서 일정 목록 조회
-- GET  /api/schedules/project       - 프로젝트 일정 목록 조회
-- GET  /api/schedules/all           - 모든 일정 조회 (통합)
-
-👤 개인 일정 CRUD:
-- POST   /api/schedules/personal    - 개인 일정 생성
-- GET    /api/schedules/personal/:id - 개인 일정 상세 조회
-- PUT    /api/schedules/personal/:id - 개인 일정 수정
-- DELETE /api/schedules/personal/:id - 개인 일정 삭제
-
-🏢 부서 일정 CRUD:
-- POST   /api/schedules/department    - 부서 일정 생성
-- GET    /api/schedules/department/:id - 부서 일정 상세 조회
-- PUT    /api/schedules/department/:id - 부서 일정 수정
-- DELETE /api/schedules/department/:id - 부서 일정 삭제
-
-📁 프로젝트 일정 CRUD:
-- POST   /api/schedules/project    - 프로젝트 일정 생성
-- GET    /api/schedules/project/:id - 프로젝트 일정 상세 조회
-- PUT    /api/schedules/project/:id - 프로젝트 일정 수정
-- DELETE /api/schedules/project/:id - 프로젝트 일정 삭제
-
-📊 응답 형식:
-{
-  "success": true,
-  "data": {...},
-  "message": "작업 완료",
-  "count": 5 (목록 조회 시)
-}
-
-🔧 기능:
-- ✅ Firestore 연동
-- ✅ TypeScript 타입 안정성
-- ✅ 에러 처리 (400, 404, 500)
-- ✅ ID 검증
-- ✅ 자동 타임스탬프 (createdAt, updatedAt)
-*/
-
-// 헬스 체크 엔드포인트
+// 헬스 체크
 app.get('/health', (_req, res) => {
   res.status(200).json({
     status: 'OK',
@@ -112,7 +75,7 @@ app.get('/health', (_req, res) => {
   });
 });
 
-// 404 핸들러
+// 404 처리
 app.use('*', (req, res) => {
   res.status(404).json({
     error: '요청한 엔드포인트를 찾을 수 없습니다.',
@@ -121,7 +84,7 @@ app.use('*', (req, res) => {
   });
 });
 
-// 에러 핸들링 미들웨어 (마지막에 배치)
+// 에러 핸들링
 app.use(errorHandler);
 
-export default app; 
+export default app;
