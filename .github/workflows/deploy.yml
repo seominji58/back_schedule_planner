@@ -34,45 +34,7 @@ jobs:
           username: ubuntu
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
-            # ✅ Firebase private key 줄바꿈 복원 + CR 제거
-            export FIREBASE_PRIVATE_KEY="$(echo -e '${{ secrets.FIREBASE_PRIVATE_KEY }}' | sed 's/\\r//g')"
-
-            # ✅ Firebase 관련 환경변수
-            export FIREBASE_TYPE="${{ secrets.FIREBASE_TYPE }}"
-            export FIREBASE_PROJECT_ID="${{ secrets.FIREBASE_PROJECT_ID }}"
-            export FIREBASE_PRIVATE_KEY_ID="${{ secrets.FIREBASE_PRIVATE_KEY_ID }}"
-            export FIREBASE_CLIENT_EMAIL="${{ secrets.FIREBASE_CLIENT_EMAIL }}"
-            export FIREBASE_CLIENT_ID="${{ secrets.FIREBASE_CLIENT_ID }}"
-            export FIREBASE_AUTH_URI="${{ secrets.FIREBASE_AUTH_URI }}"
-            export FIREBASE_TOKEN_URI="${{ secrets.FIREBASE_TOKEN_URI }}"
-            export FIREBASE_AUTH_PROVIDER_X509_CERT_URL="${{ secrets.FIREBASE_AUTH_PROVIDER_X509_CERT_URL }}"
-            export FIREBASE_CLIENT_X509_CERT_URL="${{ secrets.FIREBASE_CLIENT_X509_CERT_URL }}"
-            export FIREBASE_UNIVERSE_DOMAIN="${{ secrets.FIREBASE_UNIVERSE_DOMAIN }}"
-
-            # ✅ 서버 설정
-            export PORT="${{ secrets.PORT }}"
-            export NODE_ENV="${{ secrets.NODE_ENV }}"
-
-            # ✅ 로깅 설정
-            export LOG_LEVEL="${{ secrets.LOG_LEVEL }}"
-            export LOG_FILE="${{ secrets.LOG_FILE }}"
-
-            # ✅ 보안 설정
-            export CORS_ORIGIN="${{ secrets.CORS_ORIGIN }}"
-            export RATE_LIMIT_WINDOW_MS="${{ secrets.RATE_LIMIT_WINDOW_MS }}"
-            export RATE_LIMIT_MAX_REQUESTS="${{ secrets.RATE_LIMIT_MAX_REQUESTS }}"
-
-            # ✅ Google OAuth
-            export GOOGLE_CLIENT_ID="${{ secrets.GOOGLE_CLIENT_ID }}"
-            export GOOGLE_CLIENT_SECRET="${{ secrets.GOOGLE_CLIENT_SECRET }}"
-            export GOOGLE_REDIRECT_URI="${{ secrets.GOOGLE_REDIRECT_URI }}"
-            export GOOGLE_API_KEY="${{ secrets.GOOGLE_API_KEY }}"
-
-            # ✅ OpenAI / JWT
-            export JWT_SECRET="${{ secrets.JWT_SECRET }}"
-            export OPENAI_API_KEY="${{ secrets.OPENAI_API_KEY }}"
-
-            # ✅ 프로젝트 클론 또는 업데이트
+            # ✅ EC2 서버에 프로젝트 디렉토리 이동 또는 클론
             cd /home/ubuntu/
 
             if [ ! -d "back_schedule_planner" ]; then
@@ -84,10 +46,41 @@ jobs:
 
             cd /home/ubuntu/back_schedule_planner/backend
 
+            # ✅ .env 파일 생성
+            cat <<EOF > .env
+FIREBASE_TYPE=${{ secrets.FIREBASE_TYPE }}
+FIREBASE_PROJECT_ID=${{ secrets.FIREBASE_PROJECT_ID }}
+FIREBASE_PRIVATE_KEY_ID=${{ secrets.FIREBASE_PRIVATE_KEY_ID }}
+FIREBASE_PRIVATE_KEY="${{ secrets.FIREBASE_PRIVATE_KEY }}"
+FIREBASE_CLIENT_EMAIL=${{ secrets.FIREBASE_CLIENT_EMAIL }}
+FIREBASE_CLIENT_ID=${{ secrets.FIREBASE_CLIENT_ID }}
+FIREBASE_AUTH_URI=${{ secrets.FIREBASE_AUTH_URI }}
+FIREBASE_TOKEN_URI=${{ secrets.FIREBASE_TOKEN_URI }}
+FIREBASE_AUTH_PROVIDER_X509_CERT_URL=${{ secrets.FIREBASE_AUTH_PROVIDER_X509_CERT_URL }}
+FIREBASE_CLIENT_X509_CERT_URL=${{ secrets.FIREBASE_CLIENT_X509_CERT_URL }}
+FIREBASE_UNIVERSE_DOMAIN=${{ secrets.FIREBASE_UNIVERSE_DOMAIN }}
+
+PORT=${{ secrets.PORT }}
+NODE_ENV=${{ secrets.NODE_ENV }}
+LOG_LEVEL=${{ secrets.LOG_LEVEL }}
+LOG_FILE=${{ secrets.LOG_FILE }}
+CORS_ORIGIN=${{ secrets.CORS_ORIGIN }}
+RATE_LIMIT_WINDOW_MS=${{ secrets.RATE_LIMIT_WINDOW_MS }}
+RATE_LIMIT_MAX_REQUESTS=${{ secrets.RATE_LIMIT_MAX_REQUESTS }}
+
+GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID }}
+GOOGLE_CLIENT_SECRET=${{ secrets.GOOGLE_CLIENT_SECRET }}
+GOOGLE_REDIRECT_URI=${{ secrets.GOOGLE_REDIRECT_URI }}
+GOOGLE_API_KEY=${{ secrets.GOOGLE_API_KEY }}
+
+JWT_SECRET=${{ secrets.JWT_SECRET }}
+OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}
+EOF
+
             # ✅ 의존성 설치
             npm install
 
-            # ✅ 서버 실행 or 재시작
+            # ✅ 서버 실행 또는 재시작
             pm2 list | grep "schedule-planner-backend"
             if [ $? -eq 0 ]; then
               pm2 restart schedule-planner-backend --update-env
